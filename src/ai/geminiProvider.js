@@ -164,7 +164,7 @@ export async function generateResponse(messages, modelId = DEFAULT_MODEL) {
     continueCount < MAX_CONTINUATIONS
   ) {
     continueCount++;
-
+ 
     try {
       // Build a fresh history that includes the partial response as a model turn
       const contHistory = [

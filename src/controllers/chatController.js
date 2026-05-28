@@ -17,7 +17,7 @@ export const getConversations = asyncHandler(async (req, res) => {
 export const getConversation = asyncHandler(async (req, res) => {
   const conv = await Conversation.findOne({ _id: req.params.id, user: req.user._id });
   if (!conv) throw new ApiError(404, 'Conversation not found');
-  res.json(new ApiResponse(200, { messages: conv.messages, model: conv.model }));
+  res.json(new ApiResponse(200, { messages: conv.messages, model: "BLINKUS TRADE AGENT 1.0" }));
 });
 
 export const createConversation = asyncHandler(async (req, res) => {
@@ -25,8 +25,8 @@ export const createConversation = asyncHandler(async (req, res) => {
   const conv = await Conversation.create({
     user:  req.user._id,
     title: title || 'New Chat',
-    model: model || 'gemini-3.5-flash',
-  });
+    model: "BLINKUS TRADE AGENT 1.0",
+  }); 
   res.status(201).json(new ApiResponse(201, { conversation: conv }));
 });
 

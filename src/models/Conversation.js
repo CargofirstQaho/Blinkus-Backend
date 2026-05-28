@@ -14,7 +14,7 @@ const conversationSchema = new mongoose.Schema(
     user:         { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
     title:        { type: String, default: 'New Chat', maxlength: 120 },
     messages:     [messageSchema],
-    model:        { type: String, default: 'gemini-3.5-flash' },
+    model:        { type: String, default: "BLINKUS TRADE AGENT 1.0" },
     totalTokens:  { type: Number, default: 0 },
     lastMessage:  { type: String, default: '' },
   },
