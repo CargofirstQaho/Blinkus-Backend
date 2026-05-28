@@ -3,8 +3,8 @@ import { GoogleGenerativeAI } from "@google/generative-ai";
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
 export const MODELS = {
-  FLASH: "gemini-3.5-flash",
-  PRO:   "gemini-3.5-flash",
+  FLASH: process.env.MODEL_VERSION,
+  PRO:   process.env.MODEL_VERSION,
 };
 
 export const DEFAULT_MODEL = MODELS.FLASH;
