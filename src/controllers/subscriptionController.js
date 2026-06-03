@@ -13,7 +13,7 @@ export const getCurrentPlan = asyncHandler(async (req, res) => {
 
   const limit = getAiDailyLimit(req.user);
 
-  res.json(new ApiResponse(200, {
+  return res.json(new ApiResponse(200, {
     plan:               req.user.plan,
     planStatus:         req.user.planStatus,
     isPremium:          req.user.isPremium,

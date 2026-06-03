@@ -9,7 +9,6 @@ export const MODELS = {
 
 export const DEFAULT_MODEL = MODELS.FLASH;
 
-// Maximum consecutive continuations when model hits MAX_TOKENS
 const MAX_CONTINUATIONS = 3;
 
 function getDateContext() {
@@ -130,7 +129,6 @@ export async function generateResponse(messages, modelId = DEFAULT_MODEL) {
   let finalResponse;
   let totalTokens  = { input: 0, output: 0, total: 0 };
 
-  // ── Initial generation ────────────────────────────────────────────────────
   try {
     const chat   = model.startChat({ history, generationConfig });
     const result = await chat.sendMessage(lastMessage.content.trim());
