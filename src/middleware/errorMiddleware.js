@@ -1,12 +1,8 @@
-import { ApiError } from '../utils/ApiError.js';
-
-export function errorHandler(err, req, res, next) {
-  if (err instanceof ApiError) {
-    return res.status(err.statusCode).json({
-      success: false,
-      message: err.message,
-      errors:  err.errors,
-    });
+export function errorMiddleware(err, req, res, next) {
+  if (err.statusCode) {
+    const body = { success: false, message: err.message };
+    if (err.errorCode) body.code = err.errorCode;
+    return res.status(err.statusCode).json(body);
   }
 
   if (err.name === 'ValidationError') {

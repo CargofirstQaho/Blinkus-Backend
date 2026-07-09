@@ -1,10 +1,12 @@
 import { features } from '../config/features.js';
-import { ApiError } from '../utils/ApiError.js';
-import { asyncHandler } from '../utils/asyncHandler.js';
+import { errorHandler } from '../utils/errorHandler.js';
 
-
-export const requirePaidPlan = asyncHandler(async (req, res, next) => {
-  if (!features.PLAN_ENFORCEMENT) return next();
-  if (req.user.isPremium) return next();
-  throw new ApiError(403, 'This feature requires a paid plan. Upgrade to unlock full access.');
-});
+export const requirePaidPlan = async (req, res, next) => {
+  try {
+    if (!features.PLAN_ENFORCEMENT) return next();
+    if (req.user.isPremium) return next();
+    return next(errorHandler(403, 'This feature requires a paid plan. Upgrade to unlock full access.'));
+  } catch (error) {
+    return next(error);
+  }
+};

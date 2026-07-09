@@ -5,9 +5,15 @@
   "main": "index.js",
   "scripts": {
     "dev": "node --watch index.js",
-    "start": "node index.js"
+    "start": "node index.js",
+    "migrate:terms-acceptance": "node src/scripts/migrateTermsAcceptance.js",
+    "test:ses-email": "node src/scripts/testPaymentEmail.js"
   },
   "dependencies": {
+    "@aws-sdk/client-s3": "^3.1064.0",
+    "@aws-sdk/client-ses": "^3.1076.0",
+    "@aws-sdk/lib-storage": "^3.1064.0",
+    "@aws-sdk/s3-request-presigner": "^3.1064.0",
     "@google/generative-ai": "^0.24.1",
     "bcryptjs": "^3.0.3",
     "compression": "^1.8.1",
@@ -21,7 +27,11 @@
     "jsonwebtoken": "^9.0.3",
     "mongoose": "^9.6.2",
     "morgan": "^1.10.1",
+    "multer": "^2.1.1",
     "nodemailer": "^8.0.8",
+    "pdfkit": "^0.19.0",
+    "razorpay": "^2.9.6",
+    "ua-parser-js": "^2.0.10",
     "xss-clean": "^0.1.4"
   }
 }

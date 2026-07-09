@@ -143,15 +143,92 @@ export async function generateResponse(messages, modelId = DEFAULT_MODEL) {
       output: usage?.candidatesTokenCount || 0,
       total:  usage?.totalTokenCount      || 0,
     };
+  // } catch (err) {
+  //   const status = err.status ?? err.httpStatus ?? err.code;
+  //   if (status === 429) throw new Error("Rate limit reached. Please wait a moment and try again.");
+  //   if (status === 400) throw new Error("Invalid request. Please rephrase your message.");
+  //   if (status === 403) throw new Error("API authentication failed. Check the Gemini API key.");
+  //   if (status === 500 || status === 503) throw new Error("Gemini service is temporarily unavailable. Please try again.");
+  //   // Re-throw errors that already have a user-facing message (e.g. the empty-response error above)
+  //   throw (err.message ? err : new Error("AI service encountered an error. Please try again."));
+  // }
+
+
   } catch (err) {
-    const status = err.status ?? err.httpStatus ?? err.code;
-    if (status === 429) throw new Error("Rate limit reached. Please wait a moment and try again.");
-    if (status === 400) throw new Error("Invalid request. Please rephrase your message.");
-    if (status === 403) throw new Error("API authentication failed. Check the Gemini API key.");
-    if (status === 500 || status === 503) throw new Error("Gemini service is temporarily unavailable. Please try again.");
-    // Re-throw errors that already have a user-facing message (e.g. the empty-response error above)
-    throw (err.message ? err : new Error("AI service encountered an error. Please try again."));
+
+  console.error("\n================ GEMINI ERROR ================\n");
+
+  console.error("Timestamp:", new Date().toISOString());
+
+  console.error("Model:", resolvedModel);
+
+  console.error(
+    "Status:",
+    err?.status ??
+    err?.httpStatus ??
+    err?.code
+  );
+
+  console.error("Message:", err?.message);
+
+  console.error("Stack:", err?.stack);
+
+  try {
+    console.error(
+      "Full Error Object:", 
+      JSON.stringify(
+        err,
+        Object.getOwnPropertyNames(err),
+        2
+      )
+    );
+  } catch {
+    console.error("Raw Error:", err);
   }
+
+  console.error("\n==============================================\n");
+
+  const status =
+    err?.status ??
+    err?.httpStatus ??
+    err?.code;
+
+  if (status === 429) {
+    throw new Error(
+      "AI service temporarily throttled the request. Please try again."
+    );
+  }
+
+  if (status === 400) {
+    throw new Error(
+      "Invalid request. Please rephrase your message."
+    );
+  }
+
+  if (status === 403) {
+    throw new Error(
+      "API authentication failed. Check Gemini configuration."
+    );
+  }
+
+  if (status === 500 || status === 503) {
+    throw new Error(
+      "AI service is temporarily unavailable."
+    );
+  }
+
+  throw (
+    err?.message
+      ? err
+      : new Error(
+          "AI service encountered an unexpected error."
+        )
+  );
+}
+
+
+
+
 
   // ── Auto-continuation when model hits the output token limit ─────────────
   // finishReason === 'MAX_TOKENS' means the response was cut off, not finished naturally.
