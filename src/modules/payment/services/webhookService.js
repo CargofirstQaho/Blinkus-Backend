@@ -12,6 +12,7 @@ import {
 } from '../../../config/paymentConfig.js';
 import { calculateExpiryDate, planNameToTradeType } from '../utils/planUtils.js';
 import { logPaymentError, logRazorpayEvent } from '../utils/paymentLogger.js';
+import { runInvoiceFlow } from './invoiceOrchestrationService.js';
 
 const SUPPORTED_EVENTS = new Set([
   'payment.authorized',
@@ -69,10 +70,10 @@ async function handlePaymentAuthorized(payload, session) {
 
 async function handlePaymentCaptured(payload, session) {
   const entity = payload.payload?.payment?.entity;
-  if (!entity?.order_id) return;
+  if (!entity?.order_id) return { activated: false };
 
   const payment = await PaymentRecord.findOne({ razorpayOrderId: entity.order_id }).session(session);
-  if (!payment) return;
+  if (!payment) return { activated: false };
 
   if (payment.status !== PAYMENT_STATUSES.CAPTURED) {
     await PaymentRecord.findByIdAndUpdate(
@@ -105,7 +106,7 @@ async function handlePaymentCaptured(payload, session) {
     const now        = new Date();
     const expiryDate = calculateExpiryDate(now, payment.planName);
 
-    await Subscription.findByIdAndUpdate(
+    const activatedSubscription = await Subscription.findByIdAndUpdate(
       payment.subscriptionId,
       {
         status:    SUBSCRIPTION_STATUSES.ACTIVE,
@@ -113,7 +114,7 @@ async function handlePaymentCaptured(payload, session) {
         expiryDate,
         autoRenew: false,
       },
-      { session }
+      { new: true, session }
     );
 
     await writeAudit({
@@ -143,7 +144,18 @@ async function handlePaymentCaptured(payload, session) {
       },
       { session }
     );
+
+    return {
+      activated:      true,
+      userId:         payment.userId,
+      payment,
+      paymentId:      entity.id,
+      activatedSubscription,
+      paymentMethod:  entity.method ?? null,
+    };
   }
+
+  return { activated: false };
 }
 
 async function handlePaymentFailed(payload, session) {
@@ -279,17 +291,18 @@ export async function processWebhookEvent({ eventType, entityId, payload, receiv
   }
 
   const session = await mongoose.startSession();
+  let captureResult = null;
 
   try {
     session.startTransaction();
 
     switch (eventType) {
-      case 'payment.authorized': await handlePaymentAuthorized(payload, session); break;
-      case 'payment.captured':   await handlePaymentCaptured(payload, session);   break;
-      case 'payment.failed':     await handlePaymentFailed(payload, session);     break;
-      case 'refund.created':     await handleRefundCreated(payload, session);     break;
-      case 'refund.processed':   await handleRefundProcessed(payload, session);   break;
-      case 'order.paid':         await handleOrderPaid(payload, session);         break;
+      case 'payment.authorized': await handlePaymentAuthorized(payload, session);          break;
+      case 'payment.captured':   captureResult = await handlePaymentCaptured(payload, session); break;
+      case 'payment.failed':     await handlePaymentFailed(payload, session);              break;
+      case 'refund.created':     await handleRefundCreated(payload, session);              break;
+      case 'refund.processed':   await handleRefundProcessed(payload, session);            break;
+      case 'order.paid':         await handleOrderPaid(payload, session);                  break;
       default: break;
     }
 
@@ -319,6 +332,25 @@ export async function processWebhookEvent({ eventType, entityId, payload, receiv
     }
 
     logRazorpayEvent('WEBHOOK_PROCESSED', { eventType, entityId });
+
+    if (captureResult?.activated) {
+      try {
+        await runInvoiceFlow(
+          captureResult.userId,
+          captureResult.payment,
+          captureResult.paymentId,
+          captureResult.activatedSubscription,
+          captureResult.paymentMethod
+        );
+      } catch (invoiceErr) {
+        logPaymentError('INVOICE_FLOW_UNEXPECTED', invoiceErr, {
+          userId: captureResult.userId?.toString(),
+          eventType,
+          entityId,
+        });
+      }
+    }
+
     return { skipped: false };
   } catch (err) {
     await session.abortTransaction();
