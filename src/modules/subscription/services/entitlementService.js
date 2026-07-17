@@ -1,7 +1,7 @@
 import { ENTITLEMENT_RULES } from '../../../config/entitlementConfig.js';
 import { features } from '../../../config/features.js';
 
-function isTradeActive(user) {
+export function isTradeActive(user) {
   const trade = user?.subscription?.trade;
   if (!trade) return false;
   if (trade.status !== 'active' || !trade.unlimitedAccess) return false;

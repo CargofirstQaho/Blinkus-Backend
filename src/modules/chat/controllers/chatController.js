@@ -100,7 +100,9 @@ export const sendMessage = async (req, res, next) => {
     }
 
     await conv.save();
-    await incrementAiUsage(req.user._id);
+    if (!req.aiUsageBypassed) {
+      await incrementAiUsage(req.user._id);
+    }
 
     const saved = conv.messages[conv.messages.length - 1];
 
