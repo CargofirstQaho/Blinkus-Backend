@@ -9,6 +9,8 @@ import {
 } from '../services/tokenService.js';
 import { getTodayUsage } from '../../chat/services/usageService.js';
 import { getAiDailyLimit } from '../../subscription/services/subscriptionService.js';
+import { getUsagePeriodLabel, getNextResetDate } from '../../chat/utils/aiUsageUtils.js';
+import { FREE_AI_LIMIT_PERIOD } from '../../../config/aiUsageConfig.js';
 import { sendVerificationEmail } from '../services/email/sendVerificationEmail.js';
 import { sendForgotPasswordEmail } from '../services/email/sendForgotPasswordEmail.js';
 import { buildGoogleAuthUrl, exchangeCodeForProfile } from '../services/googleAuthService.js';
@@ -17,9 +19,12 @@ import { AUDIT_ACTIONS, AUDIT_MODULES, AUDIT_STATUS } from '../../audit/constant
 
 function usagePayload(user, todayCount) {
   const limit = getAiDailyLimit(user);
+  const isUnlimited = limit === Infinity;
   return {
     aiQuestionsToday: todayCount,
-    aiQuestionsLimit: limit === Infinity ? null : limit,
+    aiQuestionsLimit: isUnlimited ? null : limit,
+    periodLabel:      isUnlimited ? null : getUsagePeriodLabel(FREE_AI_LIMIT_PERIOD),
+    resetsAt:         isUnlimited ? null : getNextResetDate(FREE_AI_LIMIT_PERIOD).toISOString(),
   };
 }
 

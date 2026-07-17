@@ -1,5 +1,7 @@
 import { PLAN_DEFS, ALL_FEATURES } from '../../../config/plans.js';
 import { features } from '../../../config/features.js';
+import { FREE_AI_LIMIT } from '../../../config/aiUsageConfig.js';
+import { isTradeActive } from './entitlementService.js';
 
 export function getPermissionsForUser(user) {
   if (!features.SUBSCRIPTIONS) return ALL_FEATURES;
@@ -11,8 +13,8 @@ export function getPermissionsForUser(user) {
 
 export function getAiDailyLimit(user) {
   if (!features.USAGE_LIMITS) return Infinity;
-  const plan = PLAN_DEFS[user.plan];
-  return plan?.aiQuestionsPerDay ?? PLAN_DEFS.free.aiQuestionsPerDay;
+  if (isTradeActive(user)) return Infinity;
+  return FREE_AI_LIMIT;
 }
 
 export function computeBonusMonths(planType, user) {
